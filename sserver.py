@@ -9,10 +9,11 @@ import os.path
 users = {}
 user_dir = os.path.dirname(os.path.realpath(__file__))
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+img = os.path.join(user_dir, 'img')
 
 app = Flask(__name__)
 app.secret_key = 'pippo'
-app.config['UPLOAD_FOLDER'] = user_dir
+app.config['UPLOAD_FOLDER'] = img
 
 def check_user(user, pwd):
 	return USER == user and PWD == pwd
@@ -56,6 +57,9 @@ def upload_file(filename=None):
 def home():
 	return 'Hello %s' % user.name
 
+@app.route('/share', methods=['GET'])
+def share_img(filename):
+	print url_for('img', filename=filename)
 
 def search_user(name, pwd):
 	found = False
@@ -81,5 +85,7 @@ def load_users():
 
 
 if __name__ == "__main__":
+	if not os.path.exists('img'):
+		os.makedirs(os.path.join(img))
 	load_users()
 	app.run(debug=True)
