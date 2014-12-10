@@ -3,12 +3,16 @@
 
 from flask import Flask, request, Response, render_template, flash, redirect, url_for
 from functools import wraps
+from werkzeug import secure_filename
 import os.path
+
+users = {}
+user_dir = os.path.dirname(os.path.realpath(__file__))
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 app = Flask(__name__)
 app.secret_key = 'pippo'
-user_dir = os.path.dirname(os.path.realpath(__file__))
-users = {}
+app.config['UPLOAD_FOLDER'] = user_dir
 
 def check_user(user, pwd):
 	return USER == user and PWD == pwd
@@ -34,12 +38,18 @@ def login():
 			return redirect(url_for('home'))
 	return render_template('login.html', error=error)
 
+def allowed_file(filename):
+	return'.' in filename and \
+		filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file(filename=None):
 	if request.method == 'POST':
-		f = request.files[filename]
-		f.save(user_dir)
+		f = request.files['file']
+		if f and allowed_file(f.filename):
+			filename = secure_filename(f.filename)
+			f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+	return render_template('upload.html')
 
 
 @app.route('/home')
