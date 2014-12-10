@@ -22,20 +22,54 @@ class User(object):
 
 user = User()
 
-def hello():
-	return "hello"
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
+	error = 'error'
 	if request.method == 'POST':
-		if request.form['name'] != app.config['USERNAME'] or
-			request.form['pwd'] != app.config['PASSWORD']:
+		if not search_user(request.form['name'], request.form['pwd']):
 				error = 'Invalid username/password'
 		else:
-			session['logged_in'] = True
 			flash('Logged!')
-
+			return redirect(url_for('home'))
 	return render_template('login.html', error=error)
 
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file(filename=None):
+	if request.method == 'POST':
+		f = request.files[filename]
+		f.save(user_dir)
+
+
+@app.route('/home')
+def home():
+	return 'Hello %s' % user.name
+
+
+def search_user(name, pwd):
+	found = False
+	for k, v in users.items():
+		if name == k and pwd == v:
+			found = True
+			user.name = k
+			user.pwd = v
+			break
+	return found
+
+
+def read_file(filename, charset='utf-8'):
+    with open(filename, 'r') as f:
+        return f.read().decode(charset)
+
+
+def load_users():
+	lines = read_file('settings').split('\n')
+	for line in lines:
+		k, v = line.split(' ')
+		users[k] = v
+
+
 if __name__ == "__main__":
+	load_users()
 	app.run(debug=True)
